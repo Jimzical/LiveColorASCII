@@ -1,0 +1,6 @@
+pip install pillow
+pip install opencv-python
+pip install pyautogui
+pip install subprocess
+pip install time
+pip install os
