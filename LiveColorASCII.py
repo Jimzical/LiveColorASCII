@@ -6,13 +6,14 @@ import subprocess
 import pyautogui
 
 
-
 # allow windows to use color in the terminal
 os.system("color 0a")
 
 
 
-ascii_characters_by_surface = " `^\",:;Il!i~+_-?tfjrxnuvcz0mwqpdbkhao*#MW&8%B@$"
+# ascii_characters_by_surface = " `^\",:;Il!i~+_-?tfjrxnuvcz0mwqpdbkhao*#MW&8%B@$"
+ascii_characters_by_surface = [' ', '.', "'", ',', '`', ':', '"', '_', ';', '-', '!', 'I', 'i', 'l', '^', 'r', 'v', '1', 'f', 't', 'j', '~', 'h', 'a', 'A', 'k', 'e', 'C', '4', 'w', 'U', '3', 'X', 'b', 'd', 'p', 'q', 'Z', 'P', '2', 'E', 'H', '0', '5', 'G', 'S', 'O', 'g', 'K', '6', '9', 'D', 'm', 'N', '8', 'R', 'Q', 'B', 'W', 'M', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█', '▉', '▊', '▋', '▌', '▍', '▎', '▏', '▐', '░', '▒', '▓', '&', '%', '#', '@', '$'] 
+
 
 # funct to take a photo using the webcam
 def take_photo(show = False):
@@ -63,9 +64,29 @@ def read_text():
             text += line
     return text
 
+def fix_rgb(r,g,b,strong = False,Strongthreshold = 150):
+    # checking
+    if strong:
+        for rgb in [r,g,b]:
+            if rgb < Strongthreshold:
+                rgb = 0
+        for rgb in [r,g,b]:
+            if rgb > Strongthreshold:
+                rgb = 255
+    else:
+        for rgb in [r,g,b]:
+            if rgb < 100:
+                rgb = 0
+        for rgb in [r,g,b]:
+            if rgb > 200:
+                rgb = 255
+    return r,g,b
         
 def rgb_to_escape(colorlist,text):
     r, g, b = colorlist[0],colorlist[1],colorlist[2]
+
+    r,g,b = fix_rgb(r,g,b)
+
     print("\033[38;2;{};{};{}m".format(b, g, r) + text + "\033[0m",end='')
 
 if __name__ == "__main__":
