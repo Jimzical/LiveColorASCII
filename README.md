@@ -12,7 +12,6 @@ Converts Live Video from WebCam to Create a Colored ASCII Image which is display
   opencv
   pyautogui
   subprocess
-  time
   os
  ```
 
