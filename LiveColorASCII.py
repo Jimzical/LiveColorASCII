@@ -4,7 +4,6 @@ import os
 import cv2
 import subprocess
 import pyautogui
-from time import sleep
 
 
 
