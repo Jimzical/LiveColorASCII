@@ -1,108 +1,104 @@
-# termial color
-from PIL import Image
-import os
+# V3
+# 11/10/2023
+'''
+Updates:
+    - Dynamic Resizing
+    - Fixed the weird buffer issue
+    - Cleaned the code
+    - Removed Redundant Libraries
+
+TODO:
+    - Add Documentation
+    - Fix Existing Documentation
+    - Add Command Line Arguments for different Modes
+'''
+
 import cv2
-import subprocess
-import pyautogui
-import sys
+from os import system
+from pyautogui import size
+from numpy import array, mean
 
+def TakeFrame(cap):
+    """
+    -------------------------------------------------------------
+    Takes a frame from the camera
+    -------------------------------------------------------------
+    ### Parameters:
+        cap: Camera object [cv2 object]
+    ### Returns:
+        frame: Frame from the camera [numpy array]
+    """
+    success, frame = cap.read()
+    frame = cv2.flip(frame, 1)
 
-# allow windows to use color in the terminal
-os.system("color 0a")
-
-
-# setting the ascii characters by surface area
-ascii_characters_by_surface_BW = " `^\",:;Il!i~+_-?tfjrxnuvcz0mwqpdbkhao*#MW&8%B@$"
-ascii_characters_by_surface = [' ', '.', "'", ',', '`', ':', '"', '_', ';', '-', '!', 'I', 'i', 'l', '^', 'r', 'v', '1', 'f', 't', 'j', '~', 'h', 'a', 'A', 'k', 'e', 'C', '4', 'w', 'U', '3', 'X', 'b', 'd', 'p', 'q', 'Z', 'P', '2', 'E', 'H', '0', '5', 'G', 'S', 'O', 'g', 'K', '6', '9', 'D', 'm', 'N', '8', 'R', 'Q', 'B', 'W', 'M', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█', '▉', '▊', '▋', '▌', '▍', '▎', '▏', '▐', '░', '▒', '▓', '&', '%', '#', '@', '$'] 
-
-
-# funct to take a photo using the webcam
-def take_photo(show = False):
-    '''
-    ------------------------------------------------
-       Take a photo using the webcam               
-    ------------------------------------------------
-    @param show: if true the photo will be shown   
-
-    @return: the photo as a numpy array
-    '''
-    capture = cv2.VideoCapture(0)
-    ret , frame = capture.read()
-    if show:
-        cv2.imshow('frame', frame)
-        cv2.waitKey(0)
+    if not success:
+        raise Exception("Could not read Frame")
     return frame
 
-def mainConvertor(BW = False):
-    '''
-    ------------------------------------------------
-       Convert the photo to ascii art              
-    ------------------------------------------------
-    @param BW: if true the photo will be converted to black and white [Default: False]
-    
-    @return: the ascii art (text) and the image values (for the colors)
-    '''
-    # take the photo
-    imageNumpy = take_photo()
+def EndCode(cap):
+    """
+    -------------------------------------------------------------
+    Ends the code
+        - Releases the camera
+        - Destroys all the windows
+    -------------------------------------------------------------
+    ### Parameters:
+        cap: Camera object [cv2 object]
 
-    #  get the dimensions of the image
-    height, width, channels = imageNumpy.shape
+    """
 
-    # resize the image
-    imageNumpy = cv2.resize(imageNumpy, (int(width / 10 * 2.5), int(height / 10)),interpolation=cv2.INTER_AREA)
-    # update the dimensions of the image
-    width, height = int(width / 10 * 2.5), int(height / 10)
+    if cv2.waitKey(1) == ord("q"):
+        cap.release()
+        print("Camera Released")
+        exit()
 
-    # convert the image to ascii art
-    ascii_art = convert_to_ascii_art(imageNumpy, width, height, BW)
+def MainConvertor(frame, resize=True, resize_factor = 15, debug=False):
+    height, width, _ = frame.shape
+    if resize:
+        # resize_width, resize_height = int(width / 10 * 2.5), int(height / 10)
+        resize_width, resize_height = int(1920 / resize_factor), int(1080 / resize_factor)
+        frame = cv2.resize(frame, (resize_width,resize_height), cv2.INTER_LINEAR) 
 
-    return ascii_art,imageNumpy
+        # update the height and width
+        height, width = resize_height, resize_width
 
-def convert_to_ascii_art(image,width, height, BW = False):
-    '''
-    ------------------------------------------------
-       Convert the photo to ascii art              
-    ------------------------------------------------
-    @param image: the image as a numpy array
-    @param width: the width of the image
-    @param height: the height of the image
-    @param BW: if true the photo will be converted to black and white [Default: False]
-
-    @return: the ascii art (text)
-    '''
-    ascii_art = []
-    for i in range(height):
-        line = ''
-        for j in range(width):
-            # convert the pixel to a character
-            line += convert_pixel_to_character(image[i][j],BW)
-        ascii_art.append(line)
+    ascii_art = ConvertToASCII(frame, height, width)
 
     return ascii_art
 
+def ConvertToASCII(frame,height, width, BW = False, inverted = False):
+    ascii_art = []
 
-def convert_pixel_to_character(pixel,BW = False):
-    '''
-    ------------------------------------------------
-      Convert the pixel to a character            
-    ------------------------------------------------
-    @param pixel: the pixel as a list of 3 numbers (r,g,b)
-    @param BW: if true the photo will be converted to black and white [Default: False]
-
-    @return: the character
-    '''
-    (r, g, b) = pixel
-    pixel_brightness = r + g + b
-    max_brightness = 255 * 3
-    
     if BW:
-        ascii_characters_by_surface = ascii_characters_by_surface_BW
+        for i in range(0, height, 2):
+            line = ""
+            for j in range(0, width):
+                pixel = frame[i, j]
+                line += character_list[int(mean(pixel) / 25)]
+            ascii_art.append(line)
 
-    brightness_weight = len(ascii_characters_by_surface) / max_brightness
-    index = int(pixel_brightness * brightness_weight) - 1
-    return ascii_characters_by_surface[index]
+    elif inverted:
+        for i in range(0, height, 2): 
+            line = ""
+            for j in range(0, width):
+                pixel = frame[i, j]
+                line += inverted_character_list[int(mean(pixel) / 25)]
+            ascii_art.append(line)
+    else:
+        for i in range(0, height, 2):
+            line = ""
+            for j in range(0, width):
+                pixel = frame[i, j]
+                r, g, b = pixel[0],pixel[1],pixel[2]
+                # fixing the rgb values
+                r,g,b = FixColors(r,g,b)
+                line += "\033[38;2;{};{};{}m".format(pixel[2],pixel[1],pixel[0]) + character_list[int(mean(pixel) / 25)] + "\033[0m"
+            ascii_art.append(line)
 
-def fix_rgb(r,g,b,strong = False,Strongthreshold = 150):
+
+    return ascii_art
+
+def FixColors(r,g,b):
     '''
     -------------------------------------------------------------------------------
         Fix the rgb values to be between 0 and 255 and Increase the contrast
@@ -116,86 +112,51 @@ def fix_rgb(r,g,b,strong = False,Strongthreshold = 150):
 
     @return: the fixed rgb values
     '''
-    # checking
-    if strong:
-        for rgb in [r,g,b]:
-            if rgb < Strongthreshold:
-                # if the rgb value is less than threshold it will be 0
-                rgb = 0
-        for rgb in [r,g,b]:
-            if rgb > Strongthreshold:
-                # if the rgb value is more than threshold it will be 255
-                rgb = 255
-    else:
-        for rgb in [r,g,b]:
-            # if the rgb value is less than 100 it will be 0
-            if rgb < 100:
-                rgb = 0
-        for rgb in [r,g,b]:
-            # if the rgb value is more than 200 it will be 255
-            if rgb > 200:
-                rgb = 255
-    return r,g,b
-        
-def rgb_to_escape(colorlist,text):
-    '''
-    ------------------------------------------------
-         Convert the rgb values to an escape sequence so add color to the text
-    ------------------------------------------------
-    @param colorlist: the rgb values as a list
-    @param text: the text to add color to
 
-    @return: the text with color
-    '''
-    # getting the rgb values
-    r, g, b = colorlist[0],colorlist[1],colorlist[2]
-    # fixing the rgb values
-    r,g,b = fix_rgb(r,g,b)
-    # printing the text with color
-    print("\033[38;2;{};{};{}m".format(b, g, r) + text + "\033[0m",end='')
+    for rgb in [r,g,b]:
+        # if the rgb value is less than 100 it will be 0
+        if rgb < 150:
+            rgb = 0
+            # pass
+    for rgb in [r,g,b]:
+        # if the rgb value is more than 200 it will be 255
+        if rgb > 200:
+            rgb = 255
+    r,g,b = r+50,g+50,b+50
+    return r,g,b
+    
+def PrintArt(ascii_art):
+    for line in ascii_art:
+        print(line)
+
+
+def main():
+    global screen_width, screen_height
+    screen_width, screen_height = size()
+
+    global character_list, inverted_character_list
+    # character_list  = " `^\",:;Il!i~+_-?tfjrxnuvcz0mwqpdbkhao*#MW&8%B@$"
+    # character_list  = array([' ', '.', '!', 'I', 'i', 'l', '^', 'r', 'v', '1', 'f', 't', 'j', '#', '@', '$'])
+    character_list = array([' ', '.', '!', 'I', 'i', 'l', '^', 'r', 'v', '1', 'f', 't', 'j', '#', '@', '$'])
+    inverted_character_list = character_list[::-1]
+
+
+    system("color 0a")
+
+    capture = cv2.VideoCapture(0)
+    while capture.isOpened():
+        frame = TakeFrame(capture)
+        ascii_art = MainConvertor(frame, resize=True, debug=False)
+        PrintArt(ascii_art)
+        
+        # showImage(frame, changeSize=False)  # for testing
+        EndCode(capture)  # taken from Sketch-Air.py
+
+
 
 if __name__ == "__main__":
+    print("Starting...")
+    main()
 
-    # if the user wants Black and White make it BW = True
-    BW = False
-
-    # making it full screen
-    pyautogui.hotkey('super', 'up')
-    
-    while True and 0XFF != ord('q'):
-        # get the ascii art and the image values (for the colors)
-        ascii,imageValues = mainConvertor(BW = BW)
-        
-        # clear the terminal
-        os.system('cls')
-
-
-        pixel_x = 0     # for row counti
-        pixel_y = 0     # for element index in the row
-        
-        if BW:
-            for line in ascii:
-                pixel_y = 0
-                for chara in line:
-                    # [255,255,255] is white
-                    rgb_to_escape([255,255,255],chara)
-                    pixel_y += 1
-                print()
-                pixel_x += 1
-
-        else:
-            for line in ascii:
-                pixel_y = 0
-                for chara in line:
-                    # imageValues[pixel_x][pixel_y] is the rgb value of the pixel, chara is the character
-                    rgb_to_escape(imageValues[pixel_x][pixel_y],chara)
-                    pixel_y += 1
-                print()
-                pixel_x += 1
-        
         
 
-
-
-
-    
