@@ -1,6 +1,6 @@
 # LiveColorASCII
 > Version 3.0
-Converts Live Video from WebCam to Create a Colored ASCII Image which is displayed on the Terminal
+### Converts Live Video from WebCam to Create a Colored ASCII Image which is displayed on the Terminal
 
 ## Instalation
  - Clone the Repository
