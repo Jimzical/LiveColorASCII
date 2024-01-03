@@ -1,4 +1,4 @@
-# V3.0.1
+# V3.1.0
 # 03/01/2024
 '''
 Updates:
@@ -10,6 +10,7 @@ Future Updates:
     - Add Screenshot Feature
 '''
 
+import argparse
 import cv2
 from pyautogui import size
 import numpy as np
@@ -105,7 +106,7 @@ def ChangeBrightness(img : np.array, value : int =30) -> np.array:
 
     return img
 
-def showImg(img : np.array, windowName : str ='Image', waitTime : int =0) -> None:
+def ShowImg(img : np.array, windowName : str ='Image', waitTime : int =0) -> None:
     '''
     Shows an image.
 
@@ -122,7 +123,7 @@ def showImg(img : np.array, windowName : str ='Image', waitTime : int =0) -> Non
     -------
     >>> import cv2
     >>> img = cv2.imread('image.jpg')
-    >>> showImg(img)
+    >>> ShowImg(img)
     '''
     cv2.imshow(windowName, img)
     if cv2.waitKey(waitTime) == ord("q"):
@@ -172,11 +173,11 @@ def FrameToASCII(frame : np.array, resize : bool =True, resize_factor : int =15)
         # update the height and width
         height, width = resize_height, resize_width
 
-    ascii_art = convertToASCII(frame, height, width)
+    ascii_art = ConvertToASCII(frame, height, width)
 
     return ascii_art
 
-def convertToASCII(frame : np.array, height : int, width : int) -> list:
+def ConvertToASCII(frame : np.array, height : int, width : int) -> list:
     '''
     Converts a frame to ASCII art.
 
@@ -199,7 +200,7 @@ def convertToASCII(frame : np.array, height : int, width : int) -> list:
     >>> import cv2
     >>> frame = cv2.imread('image.jpg')
     >>> height, width, _ = frame.shape
-    >>> ascii_art = convertToASCII(frame, height, width)
+    >>> ascii_art = ConvertToASCII(frame, height, width)
     '''
     ascii_art = []
 
@@ -217,13 +218,13 @@ def convertToASCII(frame : np.array, height : int, width : int) -> list:
             for j in range(0, width):
                 pixel = frame[i, j]
                 r, g, b = pixel[0], pixel[1], pixel[2]
-                r, g, b = fixColors(r, g, b)
+                r, g, b = FixColors(r, g, b)
                 line += "\033[38;2;{};{};{}m".format(pixel[2], pixel[1], pixel[0]) + character_list[int(mean(pixel) / 25)] + "\033[0m"
             ascii_art.append(line)
 
     return ascii_art
 
-def fixColors(r : int, g : int, b : int) -> tuple:
+def FixColors(r : int, g : int, b : int) -> tuple:
     '''
     Fixes the RGB values to be between 0 and 255 and increases the contrast.
 
@@ -243,7 +244,7 @@ def fixColors(r : int, g : int, b : int) -> tuple:
 
     Example
     -------
-    >>> r, g, b = fixColors(100, 150, 200)
+    >>> r, g, b = FixColors(100, 150, 200)
     '''
     for rgb in [r, g, b]:
         if rgb < 150:
@@ -254,7 +255,7 @@ def fixColors(r : int, g : int, b : int) -> tuple:
     r, g, b = r + 50, g + 50, b + 50
     return r, g, b
 
-def printArt(ascii_art : list) -> None:
+def PrintArt(ascii_art : list) -> None:
     '''
     Prints the ASCII art.
 
@@ -266,7 +267,7 @@ def printArt(ascii_art : list) -> None:
     Example
     -------
     >>> ascii_art = ['..##..', '#####.', '######']
-    >>> printArt(ascii_art)
+    >>> PrintArt(ascii_art)
     '''
     for line in ascii_art:
         print(line, flush=True)
@@ -285,6 +286,18 @@ def main():
     if inverted:
         character_list = character_list[::-1]
 
+    parser = argparse.ArgumentParser(description='Live Color ASCII Art')
+    parser.add_argument('--bw', action='store_true', help='Enable BW mode')
+    parser.add_argument('--inverted', action='store_true', help='Enable inverted mode')
+    args = parser.parse_args()
+
+    if args.bw:
+        BW = True
+
+    if args.inverted:
+        inverted = True
+        character_list = character_list[::-1]
+
     print("Starting Camera...")
     capture = cv2.VideoCapture(0)
     print("Starting Camera...Done")
@@ -293,9 +306,11 @@ def main():
         frame = TakeFrame(capture)
         
         ascii_art = FrameToASCII(frame, resize=True)
-        printArt(ascii_art)
-        
-        EndCode(capture)
+        PrintArt(ascii_art)
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q') or key == 27:  # 'q' or 'esc' key
+            EndCode(capture)
 
 if __name__ == "__main__":
     main()
