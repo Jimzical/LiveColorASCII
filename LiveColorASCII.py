@@ -2,11 +2,9 @@
 # 03/01/2024
 '''
 Updates:
-    - Added Documentation
-    - Fixed Existing Documentation
+    - Added  Command Line Arguments for different Modes
 
 Future Updates:
-    - Add Command Line Arguments for different Modes
     - Add Screenshot Feature
 '''
 
